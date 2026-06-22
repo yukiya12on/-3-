@@ -18,14 +18,12 @@ button{-webkit-appearance:none;appearance:none;font-family:inherit;}
 input{font-family:inherit;}
 .slide-up{animation:slideUp .25s ease;}
 @keyframes slideUp{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
-#app{min-height:100vh;}
 </style>
 </head>
 <body>
 <div id="app"></div>
 <script>
-// ── データ ──────────────────────────────────────────────
-const ACCOUNTS=["現金","当座預金","普通預金","小口現金","受取手形","売掛金","前払金","仮払金","立替金","未収入金","繰越商品","貯蔵品","建物","備品","車両運搬具","土地","建物減価償却累計額","備品減価償却累計額","車両運搬具減価償却累計額","支払手形","買掛金","前受金","仮受金","預り金","未払金","借入金","資本金","引出金","売上","受取利息","受取手数料","仕入","給料","支払家賃","支払利息","支払手数料","水道光熱費","通信費","消耗品費","旅費交通費","雑費","減価償却費","貸倒引当金","貸倒引当金繰入","貸倒損失","当座借越","現金過不足","固定資産売却損","固定資産売却益","損益"];
+const ALL_ACCOUNTS=["現金","当座預金","普通預金","小口現金","受取手形","売掛金","前払金","仮払金","立替金","未収入金","繰越商品","貯蔵品","建物","備品","車両運搬具","土地","建物減価償却累計額","備品減価償却累計額","車両運搬具減価償却累計額","支払手形","買掛金","前受金","仮受金","預り金","未払金","借入金","資本金","引出金","売上","受取利息","受取手数料","仕入","給料","支払家賃","支払利息","支払手数料","水道光熱費","通信費","消耗品費","旅費交通費","雑費","減価償却費","貸倒引当金","貸倒引当金繰入","貸倒損失","当座借越","現金過不足","固定資産売却損","固定資産売却益","損益"];
 
 const QUESTIONS=[
   {id:1,category:"現金・預金",text:"商品を{A}円で現金販売した。",vars:{A:[5000,8000,358000]},
@@ -69,10 +67,10 @@ const QUESTIONS=[
    explanation:"備品（資産↑）/ 現金（資産↓）。"},
   {id:14,category:"固定資産",text:"建物の減価償却費{A}円を計上した（間接法）。",vars:{A:[3000,6000,240000]},
    tmpl:(v)=>[{side:"借方",account:"減価償却費",amount:v.A},{side:"貸方",account:"建物減価償却累計額",amount:v.A}],
-   explanation:"減価償却費（費用↑）/ 建物減価償却累計額（資産控除↑）。間接法は累計額勘定を使います。"},
+   explanation:"減価償却費（費用↑）/ 建物減価償却累計額（資産控除↑）。"},
   {id:15,category:"固定資産",text:"備品（帳簿価額{A}円）を{B}円で現金売却した。",vars:{A:[5000,8000,400000],B:[3000,6000,280000]},
    tmpl:(v)=>[{side:"借方",account:"現金",amount:v.B},{side:"借方",account:"固定資産売却損",amount:v.A-v.B},{side:"貸方",account:"備品",amount:v.A}],
-   explanation:"帳簿価額より低く売却 → 固定資産売却損が発生。現金（↑）＋売却損 / 備品（↓）。"},
+   explanation:"帳簿価額より低く売却 → 固定資産売却損が発生。"},
   {id:16,category:"費用・収益",text:"事務所の家賃{A}円を現金で支払った。",vars:{A:[3000,8000,120000]},
    tmpl:(v)=>[{side:"借方",account:"支払家賃",amount:v.A},{side:"貸方",account:"現金",amount:v.A}],
    explanation:"支払家賃（費用↑）/ 現金（資産↓）。"},
@@ -90,7 +88,7 @@ const QUESTIONS=[
    explanation:"売掛金×2%を貸倒引当金繰入（費用）/ 貸倒引当金（資産控除）として設定します。"},
   {id:21,category:"決算整理",text:"期首繰越商品{A}円、期末繰越商品{B}円。売上原価の計算（仕入勘定法）をせよ。",vars:{A:[2000,4000,180000],B:[3000,6000,220000]},
    tmpl:(v)=>[{side:"借方",account:"仕入",amount:v.A},{side:"貸方",account:"繰越商品",amount:v.A},{side:"借方",account:"繰越商品",amount:v.B},{side:"貸方",account:"仕入",amount:v.B}],
-   explanation:"期首商品を仕入に振替（仕入↑/繰越商品↓）、期末商品を繰越商品に振替（繰越商品↑/仕入↓）します。"},
+   explanation:"期首商品を仕入に振替、期末商品を繰越商品に振替します。"},
   {id:22,category:"決算整理",text:"家賃の前払い分{A}円を計上した。",vars:{A:[1000,3000,60000]},
    tmpl:(v)=>[{side:"借方",account:"前払金",amount:v.A},{side:"貸方",account:"支払家賃",amount:v.A}],
    explanation:"費用の前払い：前払金（資産↑）/ 支払家賃（費用↓）。"},
@@ -99,16 +97,16 @@ const QUESTIONS=[
    explanation:"収益の未収：未収入金（資産↑）/ 受取利息（収益↑）。"},
   {id:24,category:"資本・その他",text:"店主が個人的に現金{A}円を事業から引き出した。",vars:{A:[2000,5000,100000]},
    tmpl:(v)=>[{side:"借方",account:"引出金",amount:v.A},{side:"貸方",account:"現金",amount:v.A}],
-   explanation:"引出金（資本の減少）/ 現金（資産↓）。個人事業主特有の処理です。"},
+   explanation:"引出金（資本の減少）/ 現金（資産↓）。"},
   {id:25,category:"資本・その他",text:"社員の出張費を仮払いとして現金{A}円を渡した。",vars:{A:[2000,5000,80000]},
    tmpl:(v)=>[{side:"借方",account:"仮払金",amount:v.A},{side:"貸方",account:"現金",amount:v.A}],
-   explanation:"仮払金（資産↑）/ 現金（資産↓）。内容確定後に振り替えます。"},
+   explanation:"仮払金（資産↑）/ 現金（資産↓）。"},
   {id:26,category:"資本・その他",text:"仮払金{A}円の精算：旅費交通費{B}円、残金を現金で受け取った。",vars:{A:[5000,5000,80000],B:[3000,3200,62000]},
    tmpl:(v)=>[{side:"借方",account:"旅費交通費",amount:v.B},{side:"借方",account:"現金",amount:v.A-v.B},{side:"貸方",account:"仮払金",amount:v.A}],
    explanation:"旅費交通費（費用↑）＋現金（お釣り）/ 仮払金（資産↓）。"},
   {id:27,category:"資本・その他",text:"得意先から内容不明の入金{A}円が当座預金にあった。",vars:{A:[3000,6000,150000]},
    tmpl:(v)=>[{side:"借方",account:"当座預金",amount:v.A},{side:"貸方",account:"仮受金",amount:v.A}],
-   explanation:"内容不明の入金：当座預金（資産↑）/ 仮受金（負債↑）。内容判明後に振り替えます。"},
+   explanation:"内容不明の入金：当座預金（資産↑）/ 仮受金（負債↑）。"},
   {id:28,category:"資本・その他",text:"現金{A}円と備品{B}円を元入れして事業を開始した。",vars:{A:[5000,8000,500000],B:[3000,5000,200000]},
    tmpl:(v)=>[{side:"借方",account:"現金",amount:v.A},{side:"借方",account:"備品",amount:v.B},{side:"貸方",account:"資本金",amount:v.A+v.B}],
    explanation:"開業時：資産（現金＋備品）/ 資本金。"},
@@ -135,7 +133,15 @@ function fillText(text,vars){return text.replace(/\{(\w+)\}/g,(_,k)=>vars[k]!==u
 function resolveVars(vars,idx){const o={};for(const[k,a]of Object.entries(vars))o[k]=a[idx];return o;}
 function shuffle(arr){return[...arr].sort(()=>Math.random()-.5);}
 
-// ── State ──────────────────────────────────────────────
+// 正解科目＋ダミー4つで5択を作る
+function makeChoices(correctAccounts){
+  const correct=[...new Set(correctAccounts)];
+  const pool=ALL_ACCOUNTS.filter(a=>!correct.includes(a));
+  const shuffled=shuffle(pool);
+  const dummies=shuffled.slice(0,5-correct.length);
+  return shuffle([...correct,...dummies]);
+}
+
 let state={
   screen:"home",
   level:"normal",
@@ -143,12 +149,11 @@ let state={
   shuffled:[],
   qIndex:0,
   rows:[],
+  choices:[], // 5択の選択肢
   checked:false,
   isCorrect:null,
   score:{correct:0,total:0},
   showError:false,
-  openDropdown:null, // row index
-  searchText:"",
 };
 
 function setState(patch){
@@ -156,22 +161,31 @@ function setState(patch){
   render();
 }
 
-// ── Helpers ────────────────────────────────────────────
 function currentLevel(){return LEVELS.find(l=>l.key===state.level);}
 function currentQ(){return state.shuffled.length>0?state.shuffled[state.qIndex%state.shuffled.length]:null;}
 function currentVars(){const q=currentQ();return q?resolveVars(q.vars,currentLevel().idx):null;}
 function currentAnswer(){const q=currentQ();const v=currentVars();return q&&v?q.tmpl(v):[];}
 function currentCC(){const q=currentQ();return q?(CAT_COLORS[q.category]||CAT_COLORS["商品売買"]):CAT_COLORS["商品売買"];}
 
+function buildRows(q,v,level){
+  const ans=q.tmpl(v);
+  if(level==="easy"){
+    return ans.map(a=>({...a,account:""}));
+  } else {
+    return ans.map(a=>({...a,account:"",amount:""}));
+  }
+}
+
 function startQuiz(){
   const pool=state.filterCat==="すべて"?QUESTIONS:QUESTIONS.filter(q=>q.category===state.filterCat);
   const sh=shuffle(pool);
-  const lIdx=currentLevel().idx;
   const q=sh[0];
-  const v=resolveVars(q.vars,lIdx);
+  const v=resolveVars(q.vars,currentLevel().idx);
   const ans=q.tmpl(v);
-  const rows=state.level==="easy"?ans.map(a=>({...a,account:""})):ans.map(a=>({...a,account:"",amount:""}));
-  setState({screen:"quiz",shuffled:sh,qIndex:0,rows,checked:false,isCorrect:null,score:{correct:0,total:0},showError:false,openDropdown:null});
+  const correctAccounts=ans.map(a=>a.account);
+  const choices=makeChoices(correctAccounts);
+  const rows=buildRows(q,v,state.level);
+  setState({screen:"quiz",shuffled:sh,qIndex:0,rows,choices,checked:false,isCorrect:null,score:{correct:0,total:0},showError:false});
 }
 
 function loadNext(){
@@ -179,32 +193,42 @@ function loadNext(){
   const q=state.shuffled[ni%state.shuffled.length];
   const v=resolveVars(q.vars,currentLevel().idx);
   const ans=q.tmpl(v);
-  const rows=state.level==="easy"?ans.map(a=>({...a,account:""})):ans.map(a=>({...a,account:"",amount:""}));
-  setState({qIndex:ni,rows,checked:false,isCorrect:null,showError:false,openDropdown:null});
+  const correctAccounts=ans.map(a=>a.account);
+  const choices=makeChoices(correctAccounts);
+  const rows=buildRows(q,v,state.level);
+  setState({qIndex:ni,rows,choices,checked:false,isCorrect:null,showError:false});
 }
 
-function checkAnswer(){
-  const ans=currentAnswer();
-  const rows=state.rows.filter(r=>r.account&&(state.level==="easy"||r.amount));
-  if(state.rows.some(r=>!r.account||(state.level!=="easy"&&!r.amount))){setState({showError:true});return;}
-  const ok=ans.every(a=>rows.some(r=>r.side===a.side&&r.account===a.account&&(state.level==="easy"?true:Number(r.amount)===a.amount)))&&rows.length===ans.length;
-  setState(s=>({checked:true,isCorrect:ok,score:{correct:s.score.correct+(ok?1:0),total:s.score.total+1}}));
-}
-
-function updateRowAccount(i,account){
+function selectAccount(rowIndex,account){
   const rows=[...state.rows];
-  rows[i]={...rows[i],account};
-  setState({rows,openDropdown:null,searchText:""});
+  rows[rowIndex]={...rows[rowIndex],account};
+  setState({rows});
 }
+
 function updateRowAmount(i,amount){
   const rows=[...state.rows];
   rows[i]={...rows[i],amount};
   setState({rows});
 }
-function addRow(side){setState(s=>({rows:[...s.rows,{side,account:"",amount:""}]}));}
-function removeRow(i){setState(s=>({rows:s.rows.filter((_,xi)=>xi!==i)}));}
 
-// ── Render ─────────────────────────────────────────────
+function addRow(side){
+  setState(s=>({rows:[...s.rows,{side,account:"",amount:""}]}));
+}
+
+function removeRow(i){
+  setState(s=>({rows:s.rows.filter((_,xi)=>xi!==i)}));
+}
+
+function checkAnswer(){
+  const ans=currentAnswer();
+  const easy=state.level==="easy";
+  if(state.rows.some(r=>!r.account||((!easy)&&!r.amount))){setState({showError:true});return;}
+  const filled=state.rows;
+  const ok=ans.every(a=>filled.some(r=>r.side===a.side&&r.account===a.account&&(easy?true:Number(r.amount)===a.amount)))&&filled.length===ans.length;
+  setState(s=>({checked:true,isCorrect:ok,score:{correct:s.score.correct+(ok?1:0),total:s.score.total+1}}));
+}
+
+// ── DOM helpers ───────────────────────────────────────
 function el(tag,props,...children){
   const e=document.createElement(tag);
   if(props)for(const[k,v]of Object.entries(props)){
@@ -220,26 +244,78 @@ function el(tag,props,...children){
   return e;
 }
 
+// ── 科目選択ボタン（5択）────────────────────────────
+function renderAccountButtons(rowIndex,row){
+  return el("div",{style:{display:"flex",flexWrap:"wrap",gap:6,marginBottom:4}},
+    ...state.choices.map(account=>{
+      const selected=row.account===account;
+      return el("button",{
+        style:{
+          padding:"8px 12px",borderRadius:10,border:"none",cursor:"pointer",
+          fontSize:14,fontWeight:700,transition:"all .15s",
+          background:selected?"#7c3aed":"#fff",
+          color:selected?"#fff":"#374151",
+          boxShadow:selected?"0 2px 8px rgba(124,58,237,.4)":"0 1px 3px rgba(0,0,0,.1)",
+        },
+        onClick:()=>selectAccount(rowIndex,account),
+      },account);
+    })
+  );
+}
+
+// ── JournalRow ───────────────────────────────────────
+function renderJournalRow(row,i){
+  const isDebit=row.side==="借方";
+  const easy=state.level==="easy";
+  const debitRows=state.rows.filter(r=>r.side==="借方");
+  const creditRows=state.rows.filter(r=>r.side==="貸方");
+  const canRemove=isDebit?debitRows.length>1:creditRows.length>1;
+
+  return el("div",{style:{marginBottom:12,background:"#f8f7ff",borderRadius:12,padding:"12px"}},
+    el("div",{style:{display:"flex",alignItems:"center",gap:8,marginBottom:8}},
+      el("div",{style:{borderRadius:8,padding:"6px 10px",fontSize:13,fontWeight:800,
+        background:isDebit?"#dbeafe":"#fce7f3",color:isDebit?"#1d4ed8":"#be185d",
+        flexShrink:0}},row.side),
+      !easy?el("input",{
+        type:"number",placeholder:"金額",inputmode:"numeric",
+        value:row.amount||"",
+        style:{border:`1.5px solid ${state.showError&&!row.amount?"#ef4444":"#d1d5db"}`,
+          borderRadius:10,padding:"8px 10px",fontSize:15,flex:1,outline:"none",
+          color:"#1a1a2e",background:"#fff",textAlign:"right"},
+        onInput:(e)=>updateRowAmount(i,e.target.value),
+      }):null,
+      canRemove?el("button",{
+        style:{background:"#fee2e2",border:"none",borderRadius:8,cursor:"pointer",
+          color:"#ef4444",fontSize:16,width:32,height:32,
+          display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0},
+        onClick:()=>removeRow(i),
+      },"×"):null,
+    ),
+    // 5択ボタン
+    renderAccountButtons(i,row),
+    // 選択中表示
+    row.account?el("div",{style:{fontSize:12,color:"#7c3aed",fontWeight:700,marginTop:4}},
+      "✓ "+row.account):null,
+  );
+}
+
+// ── HOME ────────────────────────────────────────────
 function renderHome(){
-  const lv=currentLevel();
   return el("div",{style:{minHeight:"100vh",background:"linear-gradient(160deg,#4c1d95 0%,#7c3aed 50%,#6366f1 100%)",display:"flex",flexDirection:"column"}},
-    // Hero
     el("div",{style:{padding:"60px 28px 32px",textAlign:"center"}},
       el("div",{style:{fontSize:48,marginBottom:8}},"📒"),
       el("div",{style:{color:"rgba(255,255,255,.7)",fontSize:13,fontWeight:700,letterSpacing:2,marginBottom:6}},"BOOKKEEPING LEVEL 3"),
       el("div",{style:{color:"#fff",fontSize:28,fontWeight:800,lineHeight:"1.2",marginBottom:8}},"仕訳トレーニング"),
       el("div",{style:{color:"rgba(255,255,255,.6)",fontSize:14}},"28問 ・ 全7分野 ・ 3段階レベル"),
     ),
-    // Card
     el("div",{style:{flex:1,background:"#f5f3ff",borderRadius:"28px 28px 0 0",padding:"28px 20px 40px"}},
-      // Level
       el("div",{style:{marginBottom:24}},
         el("div",{style:{fontSize:13,fontWeight:700,color:"#7c3aed",marginBottom:12,letterSpacing:.5}},"レベルを選ぶ"),
         el("div",{style:{display:"flex",gap:10}},
           ...LEVELS.map(l=>el("button",{
             style:{flex:1,padding:"14px 4px",borderRadius:14,border:"none",cursor:"pointer",
               background:state.level===l.key?l.color:"#fff",color:state.level===l.key?"#fff":"#374151",
-              boxShadow:state.level===l.key?`0 4px 16px ${l.color}55`:"0 1px 4px rgba(0,0,0,.08)",transition:"all .2s"},
+              boxShadow:state.level===l.key?`0 4px 16px ${l.color}55`:"0 1px 4px rgba(0,0,0,.08)"},
             onClick:()=>setState({level:l.key}),
           },
             el("div",{style:{fontSize:22}},l.emoji),
@@ -248,7 +324,6 @@ function renderHome(){
           ))
         ),
       ),
-      // Category
       el("div",{style:{marginBottom:28}},
         el("div",{style:{fontSize:13,fontWeight:700,color:"#7c3aed",marginBottom:12,letterSpacing:.5}},"分野を選ぶ"),
         el("div",{style:{display:"flex",flexWrap:"wrap",gap:8}},
@@ -263,82 +338,14 @@ function renderHome(){
       el("button",{
         style:{width:"100%",padding:"18px",borderRadius:16,border:"none",cursor:"pointer",
           background:"linear-gradient(135deg,#7c3aed,#6366f1)",color:"#fff",fontSize:18,fontWeight:800,
-          boxShadow:"0 6px 24px rgba(124,58,237,.45)",letterSpacing:.5},
+          boxShadow:"0 6px 24px rgba(124,58,237,.45)"},
         onClick:startQuiz,
       },"トレーニング開始 →"),
     ),
   );
 }
 
-function renderAccountDropdown(i,row){
-  const search=state.openDropdown===i?state.searchText:"";
-  const filtered=ACCOUNTS.filter(a=>a.includes(search));
-  return el("div",{style:{position:"relative",flex:1,minWidth:0}},
-    el("div",{
-      style:{border:`1.5px solid ${row.account?"#7c3aed":"#d1d5db"}`,borderRadius:10,
-        padding:"10px 12px",cursor:"pointer",background:row.account?"#faf5ff":"#fff",
-        color:row.account?"#1a1a2e":"#9ca3af",fontSize:15,
-        display:"flex",justifyContent:"space-between",alignItems:"center"},
-      onClick:(e)=>{e.stopPropagation();setState({openDropdown:state.openDropdown===i?null:i,searchText:""});},
-    },
-      el("span",{style:{overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}},row.account||"科目を選択"),
-      el("span",{style:{fontSize:10,color:"#9ca3af",flexShrink:0,marginLeft:4}},"▼"),
-    ),
-    state.openDropdown===i?el("div",{style:{
-      position:"absolute",top:"calc(100% + 4px)",left:0,zIndex:300,
-      background:"#fff",border:"1.5px solid #7c3aed",borderRadius:12,
-      boxShadow:"0 8px 32px rgba(124,58,237,.18)",width:"220px",maxHeight:260,
-      overflow:"hidden",display:"flex",flexDirection:"column",
-    }},
-      el("input",{
-        type:"text",placeholder:"🔍 科目を検索...",value:state.searchText,
-        style:{border:"none",borderBottom:"1px solid #e9d5ff",padding:"10px 14px",fontSize:15,outline:"none",color:"#1a1a2e"},
-        onInput:(e)=>setState({searchText:e.target.value}),
-        onClick:(e)=>e.stopPropagation(),
-      }),
-      el("div",{style:{overflowY:"auto",maxHeight:200}},
-        filtered.length===0?el("div",{style:{padding:"12px 14px",color:"#9ca3af",fontSize:14}},"見つかりません"):null,
-        ...filtered.map(a=>el("div",{
-          style:{padding:"11px 14px",cursor:"pointer",fontSize:15,
-            background:row.account===a?"#f5f3ff":"transparent",color:"#1a1a2e",
-            borderLeft:row.account===a?"3px solid #7c3aed":"3px solid transparent"},
-          onClick:(e)=>{e.stopPropagation();updateRowAccount(i,a);},
-          onMouseOver:(e)=>{e.currentTarget.style.background="#faf5ff";},
-          onMouseOut:(e)=>{e.currentTarget.style.background=row.account===a?"#f5f3ff":"transparent";},
-        },a))
-      ),
-    ):null,
-  );
-}
-
-function renderJournalRow(row,i){
-  const isDebit=row.side==="借方";
-  const easy=state.level==="easy";
-  const debitRows=state.rows.filter(r=>r.side==="借方");
-  const creditRows=state.rows.filter(r=>r.side==="貸方");
-  const canRemove=isDebit?debitRows.length>1:creditRows.length>1;
-  return el("div",{style:{display:"flex",gap:8,alignItems:"center",marginBottom:8}},
-    el("div",{style:{borderRadius:8,padding:"8px 6px",fontSize:13,fontWeight:800,
-      background:isDebit?"#dbeafe":"#fce7f3",color:isDebit?"#1d4ed8":"#be185d",
-      minWidth:38,textAlign:"center",flexShrink:0,letterSpacing:.5}},row.side),
-    renderAccountDropdown(i,row),
-    el("input",{
-      type:"number",placeholder:"金額",inputmode:"numeric",
-      value:row.amount||"",
-      style:{border:`1.5px solid ${state.showError&&!row.amount&&!easy?"#ef4444":"#d1d5db"}`,
-        borderRadius:10,padding:"10px 8px",fontSize:15,width:90,outline:"none",
-        color:"#1a1a2e",flexShrink:0,background:easy?"#f3f4f6":"#fff",textAlign:"right"},
-      disabled:easy,
-      onInput:(e)=>updateRowAmount(i,e.target.value),
-    }),
-    canRemove?el("button",{
-      style:{background:"#fee2e2",border:"none",borderRadius:8,cursor:"pointer",color:"#ef4444",
-        fontSize:16,width:32,height:32,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0},
-      onClick:()=>removeRow(i),
-    },"×"):null,
-  );
-}
-
+// ── QUIZ ────────────────────────────────────────────
 function renderQuiz(){
   const q=currentQ();
   if(!q)return el("div",{},"読み込み中...");
@@ -346,11 +353,9 @@ function renderQuiz(){
   const ans=currentAnswer();
   const cc=currentCC();
   const lv=currentLevel();
-  const debitRows=state.rows.filter(r=>r.side==="借方");
-  const creditRows=state.rows.filter(r=>r.side==="貸方");
+  const easy=state.level==="easy";
 
-  return el("div",{style:{minHeight:"100vh",background:"#f5f3ff",color:"#1a1a2e"},
-    onClick:()=>{ if(state.openDropdown!==null)setState({openDropdown:null,searchText:""});}},
+  return el("div",{style:{minHeight:"100vh",background:"#f5f3ff",color:"#1a1a2e"}},
     // Header
     el("div",{style:{background:`linear-gradient(135deg,${cc.from},${cc.to})`,padding:"14px 16px",position:"sticky",top:0,zIndex:50}},
       el("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center"}},
@@ -371,60 +376,57 @@ function renderQuiz(){
         el("div",{style:{background:"#fff",height:4,borderRadius:4,width:((state.qIndex%state.shuffled.length)+1)/state.shuffled.length*100+"%",transition:"width .3s"}}),
       ),
     ),
-    // Body
     el("div",{style:{padding:"16px 16px 80px",maxWidth:560,margin:"0 auto"}},
-      // Question card
+      // Question
       el("div",{className:"slide-up",style:{background:"#fff",borderRadius:16,padding:"18px",marginBottom:14,
         boxShadow:"0 2px 16px rgba(124,58,237,.08)",borderTop:`4px solid ${cc.from}`}},
         el("div",{style:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}},
           el("span",{style:{background:cc.light,color:cc.text,borderRadius:8,padding:"4px 12px",fontSize:12,fontWeight:800}},q.category),
-          state.level==="easy"?el("span",{style:{background:"#dcfce7",color:"#15803d",borderRadius:8,padding:"4px 10px",fontSize:11,fontWeight:700}},"🌱 科目のみ"):null,
+          easy?el("span",{style:{background:"#dcfce7",color:"#15803d",borderRadius:8,padding:"4px 10px",fontSize:11,fontWeight:700}},"🌱 科目のみ"):null,
         ),
         el("p",{style:{fontSize:16,lineHeight:"1.8",color:"#1a1a2e",fontWeight:500}},fillText(q.text,v)),
       ),
-      // Input card
+      // 5択の説明
+      el("div",{style:{background:"#ede9fe",borderRadius:10,padding:"10px 14px",marginBottom:12,fontSize:13,color:"#5b21b6",fontWeight:600}},
+        "💡 下の5つの科目から選んで仕訳を入力してください"),
+      // Input
       el("div",{style:{background:"#fff",borderRadius:16,padding:"16px",marginBottom:14,boxShadow:"0 2px 16px rgba(124,58,237,.08)"}},
-        el("div",{style:{fontSize:13,fontWeight:800,color:"#6b7280",marginBottom:14,letterSpacing:.5}},"仕訳を入力"),
-        // Debit
+        el("div",{style:{fontSize:13,fontWeight:800,color:"#6b7280",marginBottom:14}},"仕訳を入力"),
         el("div",{style:{marginBottom:14}},
           el("div",{style:{fontSize:12,color:"#1d4ed8",fontWeight:800,marginBottom:8}},"借方"),
           ...state.rows.map((r,i)=>r.side==="借方"?renderJournalRow(r,i):null).filter(Boolean),
           el("button",{
-            style:{background:"#eff6ff",color:"#3b82f6",border:"1.5px dashed #93c5fd",borderRadius:10,
-              padding:"8px 16px",fontSize:13,cursor:"pointer",fontWeight:700},
+            style:{background:"#eff6ff",color:"#3b82f6",border:"1.5px dashed #93c5fd",
+              borderRadius:10,padding:"8px 16px",fontSize:13,cursor:"pointer",fontWeight:700},
             onClick:()=>addRow("借方"),
           },"＋ 借方を追加"),
         ),
         el("div",{style:{borderTop:"1.5px dashed #e9d5ff",margin:"14px 0"}}),
-        // Credit
         el("div",{},
           el("div",{style:{fontSize:12,color:"#be185d",fontWeight:800,marginBottom:8}},"貸方"),
           ...state.rows.map((r,i)=>r.side==="貸方"?renderJournalRow(r,i):null).filter(Boolean),
           el("button",{
-            style:{background:"#fdf2f8",color:"#be185d",border:"1.5px dashed #f9a8d4",borderRadius:10,
-              padding:"8px 16px",fontSize:13,cursor:"pointer",fontWeight:700},
+            style:{background:"#fdf2f8",color:"#be185d",border:"1.5px dashed #f9a8d4",
+              borderRadius:10,padding:"8px 16px",fontSize:13,cursor:"pointer",fontWeight:700},
             onClick:()=>addRow("貸方"),
           },"＋ 貸方を追加"),
         ),
       ),
-      // Error
       state.showError&&!state.checked?el("div",{style:{color:"#ef4444",fontSize:13,fontWeight:700,marginBottom:10,textAlign:"center"}},
-        "⚠ すべての科目"+(state.level!=="easy"?"と金額":"")+"を入力してください"):null,
-      // Check button
+        "⚠ すべての科目"+(easy?"":"と金額")+"を選択してください"):null,
       !state.checked?el("button",{
         style:{width:"100%",padding:"16px",borderRadius:14,border:"none",cursor:"pointer",
           background:`linear-gradient(135deg,${cc.from},${cc.to})`,color:"#fff",fontSize:17,fontWeight:800,
           boxShadow:`0 6px 20px ${cc.from}55`},
         onClick:checkAnswer,
       },"答え合わせ"):null,
-      // Result
       state.checked?el("div",{className:"slide-up",style:{
         background:state.isCorrect?"#f0fdf4":"#fff1f2",
         border:`2px solid ${state.isCorrect?"#86efac":"#fca5a5"}`,borderRadius:16,padding:"20px",
       }},
         el("div",{style:{fontSize:22,fontWeight:800,marginBottom:14,color:state.isCorrect?"#15803d":"#dc2626"}},
           state.isCorrect?"✅ 正解！":"❌ 不正解"),
-        el("div",{style:{fontSize:12,fontWeight:800,color:"#6b7280",marginBottom:10,letterSpacing:.5}},"正しい仕訳"),
+        el("div",{style:{fontSize:12,fontWeight:800,color:"#6b7280",marginBottom:10}},"正しい仕訳"),
         el("div",{style:{background:"#fff",borderRadius:12,padding:"12px",marginBottom:14}},
           ...ans.map((a,i)=>el("div",{style:{display:"flex",gap:8,alignItems:"center",marginBottom:i<ans.length-1?8:0}},
             el("span",{style:{padding:"4px 8px",borderRadius:6,fontSize:12,fontWeight:800,flexShrink:0,
@@ -450,7 +452,6 @@ function render(){
   app.innerHTML="";
   app.appendChild(state.screen==="home"?renderHome():renderQuiz());
 }
-
 render();
 </script>
 </body>
